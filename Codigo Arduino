@@ -1,0 +1,174 @@
+#include <LedControl.h>
+
+// Pines para la matriz MAX7219
+const int DIN_PIN = 11;   // Data In
+const int CS_PIN = 10;    // Chip Select
+const int CLK_PIN = 13;   // Clock
+
+LedControl matriz = LedControl(DIN_PIN, CLK_PIN, CS_PIN, 1); // Solo una matriz conectada
+
+// Pines de los LEDs
+int leds[] = {2, 3, 4, 5, 6};
+
+// Variables para guardar el último número recibido
+int ultimoNumero = -1;
+
+void setup() {
+  Serial.begin(9600);
+
+  // Inicializar LEDs
+  for (int i = 0; i < 5; i++) {
+    pinMode(leds[i], OUTPUT);
+    digitalWrite(leds[i], LOW);
+  }
+
+  // Inicializar la matriz
+  matriz.shutdown(0, false);   // Encender el display
+  matriz.setIntensity(0, 8);   // Brillo de 0 a 15
+  matriz.clearDisplay(0);      // Limpiar display
+}
+
+void loop() {
+  if (Serial.available()) {
+    String dato = Serial.readStringUntil('\n');  // Leer hasta salto de línea
+    dato.trim();  // Eliminar espacios en blanco
+
+    if (dato.length() > 0) {
+      int dedos = dato.toInt();  // Convertir a número
+
+      if (dedos != ultimoNumero) {
+        ultimoNumero = dedos;
+
+        actualizarLEDs(dedos);
+        actualizarMatriz(dedos);
+      }
+    }
+  }
+}
+
+void actualizarLEDs(int cantidad) {
+  for (int i = 0; i < 5; i++) {
+    if (i < cantidad) {
+      digitalWrite(leds[i], HIGH);
+    } else {
+      digitalWrite(leds[i], LOW);
+    }
+  }
+}
+
+void actualizarMatriz(int numero) {
+  matriz.clearDisplay(0);
+
+  switch (numero) {
+    case 0:
+      dibujarCero();
+      break;
+    case 1:
+      dibujarUno();
+      break;
+    case 2:
+      dibujarDos();
+      break;
+    case 3:
+      dibujarTres();
+      break;
+    case 4:
+      dibujarCuatro();
+      break;
+    case 5:
+      dibujarCinco();
+      break;
+    default:
+      break;
+  }
+}
+
+void dibujarCero() {
+  byte cero[8] = {
+    B00111100,
+    B01000010,
+    B10000001,
+    B10000001,
+    B10000001,
+    B10000001,
+    B01000010,
+    B00111100
+  };
+  mostrarImagen(cero);
+}
+
+void dibujarUno() {
+  byte uno[8] = {
+    B00001000,
+    B00011000,
+    B00101000,
+    B00001000,
+    B00001000,
+    B00001000,
+    B00001000,
+    B00111110
+  };
+  mostrarImagen(uno);
+}
+
+void dibujarDos() {
+  byte dos[8] = {
+    B00111100,
+    B01000010,
+    B00000010,
+    B00000100,
+    B00001000,
+    B00010000,
+    B00100000,
+    B01111110
+  };
+  mostrarImagen(dos);
+}
+
+void dibujarTres() {
+  byte tres[8] = {
+    B00111100,
+    B01000010,
+    B00000010,
+    B00011100,
+    B00000010,
+    B00000010,
+    B01000010,
+    B00111100
+  };
+  mostrarImagen(tres);
+}
+
+void dibujarCuatro() {
+  byte cuatro[8] = {
+    B00000100,
+    B00001100,
+    B00010100,
+    B00100100,
+    B01000100,
+    B01111110,
+    B00000100,
+    B00000100
+  };
+  mostrarImagen(cuatro);
+}
+
+void dibujarCinco() {
+  byte cinco[8] = {
+    B01111110,
+    B01000000,
+    B01000000,
+    B01111100,
+    B00000010,
+    B00000010,
+    B01000010,
+    B00111100
+  };
+  mostrarImagen(cinco);
+}
+
+void mostrarImagen(byte imagen[8]) {
+  for (int i = 0; i < 8; i++) {
+    matriz.setRow(0, i, imagen[i]);
+  }
+}
